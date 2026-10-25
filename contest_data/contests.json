@@ -263,6 +263,39 @@
       }
     }
   },
+  "ABC478": {
+    "name": "AtCoder Beginner Contest 478",
+    "tasks": {
+      "A": {
+        "name": "Grapes",
+        "link": "/contests/ABC478/tasks/abc478_a"
+      },
+      "B": {
+        "name": "Topping",
+        "link": "/contests/ABC478/tasks/abc478_b"
+      },
+      "C": {
+        "name": "Sort Subarray",
+        "link": "/contests/ABC478/tasks/abc478_c"
+      },
+      "D": {
+        "name": "Range Set Insertion Query",
+        "link": "/contests/ABC478/tasks/abc478_d"
+      },
+      "E": {
+        "name": "lt and le",
+        "link": "/contests/ABC478/tasks/abc478_e"
+      },
+      "F": {
+        "name": "Min-First Search",
+        "link": "/contests/ABC478/tasks/abc478_f"
+      },
+      "G": {
+        "name": "Division Point Hull",
+        "link": "/contests/ABC478/tasks/abc478_g"
+      }
+    }
+  },
   "CFC2218": {
     "name": "Codeforces Round 1090 (Div. 4)",
     "tasks": {

@@ -8,7 +8,7 @@ This is an archive of the problems that I've solved starting Apr 2026.
 <!-- START_STATS -->
 |Category|Number Solved|
 |:-:|:-:|
-|AtCoder|50|
+|AtCoder|54|
 |Codeforces|12|
 <!-- END_STATS -->
 
@@ -103,6 +103,14 @@ All Problems
 - [ABC455_E.cpp](/AtCoder/ABC%20400-499/ABC455/ABC455_E.cpp) - [Unbalanced ABC Substrings](https://atcoder.jp/contests/ABC455/tasks/abc455_e)
 - [ABC455_F.cpp](/AtCoder/ABC%20400-499/ABC455/ABC455_F.cpp) - [Merge Slimes 2](https://atcoder.jp/contests/ABC455/tasks/abc455_f)
 </details>
+<details>
+<summary>ABC478 - AtCoder Beginner Contest 478</summary>
+
+- [ABC478_A.cpp](/AtCoder/ABC%20400-499/ABC478/ABC478_A.cpp) - [Grapes](https://atcoder.jp/contests/ABC478/tasks/abc478_a)
+- [ABC478_B.cpp](/AtCoder/ABC%20400-499/ABC478/ABC478_B.cpp) - [Topping](https://atcoder.jp/contests/ABC478/tasks/abc478_b)
+- [ABC478_C.cpp](/AtCoder/ABC%20400-499/ABC478/ABC478_C.cpp) - [Sort Subarray](https://atcoder.jp/contests/ABC478/tasks/abc478_c)
+- [ABC478_D.cpp](/AtCoder/ABC%20400-499/ABC478/ABC478_D.cpp) - [Range Set Insertion Query](https://atcoder.jp/contests/ABC478/tasks/abc478_d)
+</details>
 </details>
 </details>
 <details>
@@ -167,6 +175,13 @@ To Upsolve
 <summary>ABC455 - Ｓｋｙ Inc, Programming Contest 2026 (AtCoder Beginner Contest 455)</summary>
 
 - G - [Balanced Subarrays](https://atcoder.jp/contests/ABC455/tasks/abc455_g)
+</details>
+<details>
+<summary>ABC478 - AtCoder Beginner Contest 478</summary>
+
+- E - [lt and le](https://atcoder.jp/contests/ABC478/tasks/abc478_e)
+- F - [Min-First Search](https://atcoder.jp/contests/ABC478/tasks/abc478_f)
+- G - [Division Point Hull](https://atcoder.jp/contests/ABC478/tasks/abc478_g)
 </details>
 <details>
 <summary>CFC2220 - Codeforces Round 1093 (Div. 2)</summary>

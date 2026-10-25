@@ -1,0 +1,332 @@
+{
+  "ABC448": {
+    "name": "AtCoder Beginner Contest 448",
+    "tasks": {
+      "A": {
+        "name": "chmin",
+        "link": "/contests/ABC448/tasks/abc448_a"
+      },
+      "B": {
+        "name": "Pepper Addiction",
+        "link": "/contests/ABC448/tasks/abc448_b"
+      },
+      "C": {
+        "name": "Except and Min",
+        "link": "/contests/ABC448/tasks/abc448_c"
+      },
+      "D": {
+        "name": "Integer-duplicated Path",
+        "link": "/contests/ABC448/tasks/abc448_d"
+      },
+      "E": {
+        "name": "Simple Division",
+        "link": "/contests/ABC448/tasks/abc448_e"
+      },
+      "F": {
+        "name": "Authentic Traveling Salesman Problem",
+        "link": "/contests/ABC448/tasks/abc448_f"
+      },
+      "G": {
+        "name": "Conquest",
+        "link": "/contests/ABC448/tasks/abc448_g"
+      }
+    }
+  },
+  "ABC449": {
+    "name": "AtCoder Beginner Contest 449",
+    "tasks": {
+      "A": {
+        "name": "π",
+        "link": "/contests/ABC449/tasks/abc449_a"
+      },
+      "B": {
+        "name": "Deconstruct Chocolate",
+        "link": "/contests/ABC449/tasks/abc449_b"
+      },
+      "C": {
+        "name": "Comfortable Distance",
+        "link": "/contests/ABC449/tasks/abc449_c"
+      },
+      "D": {
+        "name": "Make Target 2",
+        "link": "/contests/ABC449/tasks/abc449_d"
+      },
+      "E": {
+        "name": "A += v",
+        "link": "/contests/ABC449/tasks/abc449_e"
+      },
+      "F": {
+        "name": "Grid Clipping",
+        "link": "/contests/ABC449/tasks/abc449_f"
+      },
+      "G": {
+        "name": "Many Repunit Sum 2 ",
+        "link": "/contests/ABC449/tasks/abc449_g"
+      }
+    }
+  },
+  "ABC450": {
+    "name": "AtCoder Beginner Contest 450",
+    "tasks": {
+      "A": {
+        "name": "3,2,1,GO",
+        "link": "/contests/ABC450/tasks/abc450_a"
+      },
+      "B": {
+        "name": "Split Ticketing",
+        "link": "/contests/ABC450/tasks/abc450_b"
+      },
+      "C": {
+        "name": "Puddles",
+        "link": "/contests/ABC450/tasks/abc450_c"
+      },
+      "D": {
+        "name": "Minimize Range",
+        "link": "/contests/ABC450/tasks/abc450_d"
+      },
+      "E": {
+        "name": "Fibonacci String",
+        "link": "/contests/ABC450/tasks/abc450_e"
+      },
+      "F": {
+        "name": "Strongly Connected 2",
+        "link": "/contests/ABC450/tasks/abc450_f"
+      },
+      "G": {
+        "name": "Random Subtraction",
+        "link": "/contests/ABC450/tasks/abc450_g"
+      }
+    }
+  },
+  "ABC451": {
+    "name": "AtCoder Beginner Contest 451",
+    "tasks": {
+      "A": {
+        "name": "illegal",
+        "link": "/contests/ABC451/tasks/abc451_a"
+      },
+      "B": {
+        "name": "Personnel Change",
+        "link": "/contests/ABC451/tasks/abc451_b"
+      },
+      "C": {
+        "name": "Understory",
+        "link": "/contests/ABC451/tasks/abc451_c"
+      },
+      "D": {
+        "name": "Concat Power of 2",
+        "link": "/contests/ABC451/tasks/abc451_d"
+      },
+      "E": {
+        "name": "Tree Distance",
+        "link": "/contests/ABC451/tasks/abc451_e"
+      },
+      "F": {
+        "name": "Make Bipartite 3",
+        "link": "/contests/ABC451/tasks/abc451_f"
+      },
+      "G": {
+        "name": "Minimum XOR Walk",
+        "link": "/contests/ABC451/tasks/abc451_g"
+      }
+    }
+  },
+  "ABC452": {
+    "name": "AtCoder Beginner Contest 452",
+    "tasks": {
+      "A": {
+        "name": "Gothec",
+        "link": "/contests/ABC452/tasks/abc452_a"
+      },
+      "B": {
+        "name": "Draw Frame",
+        "link": "/contests/ABC452/tasks/abc452_b"
+      },
+      "C": {
+        "name": "Fishbones",
+        "link": "/contests/ABC452/tasks/abc452_c"
+      },
+      "D": {
+        "name": "No-Subsequence Substring",
+        "link": "/contests/ABC452/tasks/abc452_d"
+      },
+      "E": {
+        "name": "You WILL Like Sigma Problem",
+        "link": "/contests/ABC452/tasks/abc452_e"
+      },
+      "F": {
+        "name": "Interval Inversion Count",
+        "link": "/contests/ABC452/tasks/abc452_f"
+      },
+      "G": {
+        "name": "221 Substring",
+        "link": "/contests/ABC452/tasks/abc452_g"
+      }
+    }
+  },
+  "ABC453": {
+    "name": "AtCoder Beginner Contest 453",
+    "tasks": {
+      "A": {
+        "name": "Trimo",
+        "link": "/contests/ABC453/tasks/abc453_a"
+      },
+      "B": {
+        "name": "Sensor Data Logging",
+        "link": "/contests/ABC453/tasks/abc453_b"
+      },
+      "C": {
+        "name": "Sneaking Glances",
+        "link": "/contests/ABC453/tasks/abc453_c"
+      },
+      "D": {
+        "name": "Go Straight",
+        "link": "/contests/ABC453/tasks/abc453_d"
+      },
+      "E": {
+        "name": "Team Division",
+        "link": "/contests/ABC453/tasks/abc453_e"
+      },
+      "F": {
+        "name": "Avoid Division",
+        "link": "/contests/ABC453/tasks/abc453_f"
+      },
+      "G": {
+        "name": "Copy Query",
+        "link": "/contests/ABC453/tasks/abc453_g"
+      }
+    }
+  },
+  "ABC454": {
+    "name": "Keysight Technologies Programming Contest（AtCoder Beginner Contest 454）",
+    "tasks": {
+      "A": {
+        "name": "Closed interval",
+        "link": "/contests/ABC454/tasks/abc454_a"
+      },
+      "B": {
+        "name": "Mapping",
+        "link": "/contests/ABC454/tasks/abc454_b"
+      },
+      "C": {
+        "name": "Straw Millionaire",
+        "link": "/contests/ABC454/tasks/abc454_c"
+      },
+      "D": {
+        "name": "(xx)",
+        "link": "/contests/ABC454/tasks/abc454_d"
+      },
+      "E": {
+        "name": "LRUD Moving",
+        "link": "/contests/ABC454/tasks/abc454_e"
+      },
+      "F": {
+        "name": "Make it Palindrome 2",
+        "link": "/contests/ABC454/tasks/abc454_f"
+      },
+      "G": {
+        "name": "Mode in the Subtree",
+        "link": "/contests/ABC454/tasks/abc454_g"
+      }
+    }
+  },
+  "ABC455": {
+    "name": "Ｓｋｙ Inc, Programming Contest 2026 (AtCoder Beginner Contest 455)",
+    "tasks": {
+      "A": {
+        "name": "455",
+        "link": "/contests/ABC455/tasks/abc455_a"
+      },
+      "B": {
+        "name": "Spiral Galaxy",
+        "link": "/contests/ABC455/tasks/abc455_b"
+      },
+      "C": {
+        "name": "Vanish",
+        "link": "/contests/ABC455/tasks/abc455_c"
+      },
+      "D": {
+        "name": "Card Pile Query",
+        "link": "/contests/ABC455/tasks/abc455_d"
+      },
+      "E": {
+        "name": "Unbalanced ABC Substrings",
+        "link": "/contests/ABC455/tasks/abc455_e"
+      },
+      "F": {
+        "name": "Merge Slimes 2",
+        "link": "/contests/ABC455/tasks/abc455_f"
+      },
+      "G": {
+        "name": "Balanced Subarrays",
+        "link": "/contests/ABC455/tasks/abc455_g"
+      }
+    }
+  },
+  "CFC2218": {
+    "name": "Codeforces Round 1090 (Div. 4)",
+    "tasks": {
+      "A": {
+        "name": "The 67th Integer Problem",
+        "link": "/contest/2218/problem/A"
+      },
+      "B": {
+        "name": "The 67th 6-7 Integer Problem",
+        "link": "/contest/2218/problem/B"
+      },
+      "C": {
+        "name": "The 67th Permutation Problem",
+        "link": "/contest/2218/problem/C"
+      },
+      "D": {
+        "name": "The 67th OEIS Problem",
+        "link": "/contest/2218/problem/D"
+      },
+      "E": {
+        "name": "The 67th XOR Problem",
+        "link": "/contest/2218/problem/E"
+      },
+      "F": {
+        "name": "The 67th Tree Problem",
+        "link": "/contest/2218/problem/F"
+      },
+      "G": {
+        "name": "The 67th Iteration of \"Counting is Fun\"",
+        "link": "/contest/2218/problem/G"
+      }
+    }
+  },
+  "CFC2220": {
+    "name": "Codeforces Round 1093 (Div. 2)",
+    "tasks": {
+      "A": {
+        "name": "Blocked",
+        "link": "/contest/2220/problem/A"
+      },
+      "B": {
+        "name": "OIE Excursion",
+        "link": "/contest/2220/problem/B"
+      },
+      "C": {
+        "name": "Grid L",
+        "link": "/contest/2220/problem/C"
+      },
+      "D1": {
+        "name": "Unique Values (Easy version)",
+        "link": "/contest/2220/problem/D1"
+      },
+      "D2": {
+        "name": "Unique Values (Hard version)",
+        "link": "/contest/2220/problem/D2"
+      },
+      "E": {
+        "name": "Coloring a Red Black Tree",
+        "link": "/contest/2220/problem/E"
+      },
+      "F": {
+        "name": "MEX Replacement on Tree",
+        "link": "/contest/2220/problem/F"
+      }
+    }
+  }
+}

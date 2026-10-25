@@ -1,120 +1,157 @@
+"""Shared data structures and Markdown generation utilities."""
+
+from dataclasses import dataclass, field
+import os
+import re
 from typing import Literal
 
-class Markdown:
-  def __init__(self, output_path: str):
-    self.output_path = output_path
-    self.text = ""
-  
-  def write(self):
-    with open(self.output_path, "w") as f:
-      f.write(self.text)
-
-  def add(self, other_text: str):
-    self.text += other_text
-
-  def add_line(self, line: str):
-    self.add(line)
-    self.add("\n")
-  
-  def add_lines(self, lines: list[str]):
-    for line in lines:
-      self.add_line(line)
-  
-  def __repr__(self):
-    return self.text
-
-  @staticmethod
-  def dedent(text: str) -> str:
-    lines = text.split("\n")
-    lines = [line.lstrip() for line in lines]
-    return "\n".join(lines)
-
-  @staticmethod
-  def collapsed_section(summary: str, lines: list[str]) -> str:
-    """Returns a collapsed section in markdown."""
-    text = f"""<details>
-    <summary>{summary}</summary>
-
-    {"\n".join(lines)}
-    </details>"""
-    return Markdown.dedent(text)
-
-  @staticmethod
-  def link(text: str, href: str) -> str:
-    """Returns a link in markdown."""
-    return f"[{text}]({href})"
-
-  @staticmethod
-  def header(text: str, level: int = 1):
-    return f"{'#'*level} {text}"
-  
-  @staticmethod
-  def table(header: list[str], alignment: list[Literal["l","r","c"]], data: list[list[str]]):
-    if len(header) != len(alignment):
-      raise RuntimeError(f"Header has {len(header)} columns, but data has {len(alignment)}.")
-    
-    if len(header) != len(data):
-      raise RuntimeError(f"Header has {len(header)} columns, but data has {len(data)}.")
-    
-    if len(header) == 0:
-      raise RuntimeError("Number of columns must be 1 or greater.")
-    
-    h = len(data[0])
-    for i in range(1, len(data)):
-      if h != len(data[i]):
-        raise RuntimeError("Number of rows must be the same for all columns.")
-    
-    allowed_alignment = set(["l", "r", "c"])
-    for a in alignment:
-      if a not in allowed_alignment:
-        raise RuntimeError(f"Unknown alignement '{a}'.")
-
-    def map_alignment(ch: Literal["l", "r", "c"]):
-      if ch == "l": return ":-"
-      elif ch == "r": return "-:"
-      else: return ":-:"
-
-    lines = [
-      f"|{'|'.join(header)}|",
-      f"|{'|'.join([map_alignment(a) for a in alignment])}|",
-      *[f"|{'|'.join(row)}|" for row in zip(*data)]
-    ]
-    return '\n'.join(lines)
-  
-  @staticmethod
-  def hrule():
-    return "---"
-  
-class Task:
-  def __init__(self, task_code, task_name, task_link):
-    self.task_code = task_code
-    self.task_name = task_name
-    self.task_link = task_link
-  
-  def __repr__(self):
-    return f"<Task {self.task_code} - {self.task_name}>"
-
-class Contest:
-  def __init__(self, contest_code, contest_name):
-    self.contest_code = contest_code
-    self.contest_name = contest_name
-    self.tasks = []
-  
-  def __repr__(self):
-    return f"<Contest {self.contest_code} - {self.contest_name}>"
-
-  def __len__(self):
-    return len(self.tasks)
-
-  def add_task(self, task: Task):
-    self.tasks.append(task)
-  
-  def add_tasks(self, tasks: list[Task]):
-    self.tasks.extend(tasks)
-
-CONTESTS_CACHE = "contest_data/contests.csv"
-CONTEST_DETAILS_CACHE = "contest_data/contest_details.csv"
+CONTESTS_CACHE = "contest_data/contests.json"
 ATCODER_PATH = "AtCoder"
 CODEFORCES_PATH = "Codeforces"
 ATCODER_DOMAIN = "https://atcoder.jp"
 CODEFORCES_DOMAIN = "https://codeforces.com"
+
+SOLUTION_EXTENSIONS = {".cpp", ".cc", ".c", ".py", ".java", ".rs", ".go"}
+
+
+def is_solution_file(filename: str) -> bool:
+  """Returns True if the filename looks like a valid contest solution file."""
+  if filename.startswith("."):
+    return False
+  base, ext = os.path.splitext(filename)
+  if ext.lower() not in SOLUTION_EXTENSIONS:
+    return False
+  return "_" in base
+
+
+def parse_solution_filename(filename: str) -> tuple[str, str]:
+  """Extracts (contest_code, task_code) from a filename like 'ABC450_A.py'."""
+  base, _ = os.path.splitext(os.path.basename(filename))
+  contest_code, rest = base.split("_", 1)
+  task_code = rest.split("_", 1)[0]
+  return contest_code, task_code
+
+
+@dataclass
+class Task:
+  """Represents a single contest problem/task."""
+  task_code: str
+  task_name: str
+  task_link: str
+
+  def to_dict(self) -> dict[str, str]:
+    """Serializes task metadata to a dictionary."""
+    return {
+      "name": self.task_name,
+      "link": self.task_link,
+    }
+
+
+@dataclass
+class Contest:
+  """Represents a competitive programming contest and its tasks."""
+  contest_code: str
+  contest_name: str
+  tasks: list[Task] = field(default_factory=list)
+
+  def __len__(self) -> int:
+    return len(self.tasks)
+
+  def add_task(self, task: Task) -> None:
+    """Appends a task to the contest."""
+    self.tasks.append(task)
+
+  def to_dict(self) -> dict:
+    """Serializes the contest and its tasks for JSON caching."""
+    return {
+      "name": self.contest_name,
+      "tasks": {task.task_code: task.to_dict() for task in self.tasks},
+    }
+
+  @classmethod
+  def from_dict(cls, contest_code: str, data: dict) -> "Contest":
+    """Deserializes a Contest instance from cached JSON dictionary data."""
+    tasks = [
+      Task(task_code=code, task_name=info["name"], task_link=info["link"])
+      for code, info in data.get("tasks", {}).items()
+    ]
+    return cls(
+      contest_code=contest_code,
+      contest_name=data["name"],
+      tasks=tasks,
+    )
+
+
+class Markdown:
+  """Helper utilities for generating and updating Markdown sections."""
+
+  @staticmethod
+  def collapsed_section(summary: str, lines: list[str]) -> str:
+    """Returns a collapsible <details> block in Markdown."""
+    body = "\n".join(lines)
+    return f"<details>\n<summary>{summary}</summary>\n\n{body}\n</details>"
+
+  @staticmethod
+  def link(text: str, href: str) -> str:
+    """Returns a Markdown link."""
+    return f"[{text}]({href})"
+
+  @staticmethod
+  def header(text: str, level: int = 1) -> str:
+    """Returns a Markdown heading of the specified level."""
+    return f"{'#' * level} {text}"
+
+  @staticmethod
+  def table(
+    header: list[str],
+    alignment: list[Literal["l", "r", "c"]],
+    data: list[list[str]],
+  ) -> str:
+    """Generates a Markdown table from column-oriented data."""
+    if len(header) != len(alignment):
+      raise RuntimeError(
+        f"Header has {len(header)} columns, but alignment has {len(alignment)}."
+      )
+    if len(header) != len(data):
+      raise RuntimeError(
+        f"Header has {len(header)} columns, but data has {len(data)}."
+      )
+    if len(header) == 0:
+      raise RuntimeError("Number of columns must be 1 or greater.")
+
+    num_rows = len(data[0])
+    for col in data[1:]:
+      if len(col) != num_rows:
+        raise RuntimeError("Number of rows must be the same for all columns.")
+
+    align_map = {"l": ":-", "r": "-:", "c": ":-:"}
+    for a in alignment:
+      if a not in align_map:
+        raise RuntimeError(f"Unknown alignment '{a}'.")
+
+    lines = [
+      f"|{'|'.join(header)}|",
+      f"|{'|'.join(align_map[a] for a in alignment)}|",
+      *[f"|{'|'.join(row)}|" for row in zip(*data)],
+    ]
+    return "\n".join(lines)
+
+  @staticmethod
+  def hrule() -> str:
+    """Returns a Markdown horizontal rule."""
+    return "---"
+
+  @staticmethod
+  def replace_section(content: str, marker: str, replacement: str) -> str:
+    """Replaces text between <!-- START_{marker} --> and <!-- END_{marker} -->."""
+    start_tag = f"<!-- START_{marker} -->"
+    end_tag = f"<!-- END_{marker} -->"
+    pattern = re.compile(
+      rf"({re.escape(start_tag)}\n).*?(\n{re.escape(end_tag)})",
+      re.DOTALL,
+    )
+    if not pattern.search(content):
+      raise RuntimeError(
+        f"Markers {start_tag} ... {end_tag} not found in README.md."
+      )
+    return pattern.sub(lambda m: f"{m.group(1)}{replacement}{m.group(2)}", content)

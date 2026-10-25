@@ -4,7 +4,7 @@ This is an archive of the problems that I've solved starting Apr 2026.
 <!-- START_STATS -->
 |Category|Number Solved|
 |:-:|:-:|
-|AtCoder|50|
+|AtCoder|532|
 |Codeforces|12|
 <!-- END_STATS -->
 

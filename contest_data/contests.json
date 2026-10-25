@@ -295,38 +295,5 @@
         "link": "/contest/2218/problem/G"
       }
     }
-  },
-  "CFC2220": {
-    "name": "Codeforces Round 1093 (Div. 2)",
-    "tasks": {
-      "A": {
-        "name": "Blocked",
-        "link": "/contest/2220/problem/A"
-      },
-      "B": {
-        "name": "OIE Excursion",
-        "link": "/contest/2220/problem/B"
-      },
-      "C": {
-        "name": "Grid L",
-        "link": "/contest/2220/problem/C"
-      },
-      "D1": {
-        "name": "Unique Values (Easy version)",
-        "link": "/contest/2220/problem/D1"
-      },
-      "D2": {
-        "name": "Unique Values (Hard version)",
-        "link": "/contest/2220/problem/D2"
-      },
-      "E": {
-        "name": "Coloring a Red Black Tree",
-        "link": "/contest/2220/problem/E"
-      },
-      "F": {
-        "name": "MEX Replacement on Tree",
-        "link": "/contest/2220/problem/F"
-      }
-    }
   }
 }

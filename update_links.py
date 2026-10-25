@@ -17,8 +17,8 @@ from utils import (
 
 REQUEST_TIMEOUT = 10
 USER_AGENT = (
-  "Mozilla/5.0 (compatible; compprog-solutions-updater/2.0; "
-  "+https://github.com/ongyiumark/compprog-solutions)"
+  "Mozilla/5.0 (compatible; competitive-programming-updater/2.0; "
+  "+https://github.com/ongyiumark/competitive-programming)"
 )
 
 
@@ -88,8 +88,7 @@ def get_codeforces_contest_details(
 ) -> Contest:
   """Fetches contest details from the official Codeforces API."""
   api_url = (
-    "https://codeforces.com/api/contest.standings"
-    f"?contestId={contest_id}&from=1&count=1"
+    f"https://codeforces.com/api/contest.standings?contestId={contest_id}"
   )
   response = requests.get(
     api_url,
@@ -97,9 +96,15 @@ def get_codeforces_contest_details(
     timeout=REQUEST_TIMEOUT,
   )
   if response.status_code != 200:
+    detail = f"HTTP {response.status_code}"
+    try:
+      comment = response.json().get("comment")
+      if comment:
+        detail = f"{detail} - {comment}"
+    except ValueError:
+      pass
     raise RuntimeError(
-      f"Failed to query Codeforces API for contest {contest_id} "
-      f"(HTTP {response.status_code})."
+      f"Failed to query Codeforces API for contest {contest_id} ({detail})."
     )
 
   payload = response.json()

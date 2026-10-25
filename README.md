@@ -1,10 +1,14 @@
 # Competitive Programming Solutions
+
+[![AtCoder](https://img.shields.io/badge/dynamic/json?label=AtCoder&prefix=ongyiumark%20%7C%20&query=%24%5B-1%3A%5D.NewRating&url=https%3A%2F%2Fatcoder.jp%2Fusers%2Fongyiumark%2Fhistory%2Fjson&color=00C0C0)](https://atcoder.jp/users/ongyiumark)
+[![Codeforces](https://img.shields.io/badge/dynamic/json?label=Codeforces&prefix=ongyiumark%20%7C%20&query=%24.result%5B0%5D.rating&url=https%3A%2F%2Fcodeforces.com%2Fapi%2Fuser.info%3Fhandles%3Dongyiumark&color=03A89E)](https://codeforces.com/profile/ongyiumark)
+
 This is an archive of the problems that I've solved starting Apr 2026.
 
 <!-- START_STATS -->
 |Category|Number Solved|
 |:-:|:-:|
-|AtCoder|532|
+|AtCoder|50|
 |Codeforces|12|
 <!-- END_STATS -->
 
@@ -176,12 +180,22 @@ Usage Instructions
 ---
 This section is mainly for my future self, but also serves as instructions for anyone who wants to clone this repository to track their own solutions.
 
+### Directory & Naming Convention Quick Reference
+
+Target directories (`AtCoder/`, `Codeforces/`) can have any number of subdirectories for organization, as long as the leaf contest folder and solution files follow this format:
+
+| Platform | Contest Folder Format | Solution File Format | Example Path |
+| :-: | :-: | :-: | :- |
+| **AtCoder** | `<CONTEST_CODE>` | `<CONTEST_CODE>_<TASK>.<ext>` | `AtCoder/ABC 400-499/ABC455/ABC455_A.cpp` |
+| **Codeforces** | `CFC<CONTEST_ID>` | `CFC<CONTEST_ID>_<TASK>.<ext>` | `Codeforces/Contests/Division 2/CFC2220/CFC2220_D1.cpp` |
+
+- Multiple files for the same task or sub-versions can use an extra underscore suffix (e.g., `<CONTEST_CODE>_<TASK>_v2.cpp`) and are counted once per unique task.
+- Supported file extensions: `.cpp`, `.cc`, `.c`, `.py`, `.java`, `.rs`, `.go`.
+
+### Updating the README
+
 - **Automatic Updates on Push (GitHub Actions)**: Pushing solution changes to `main` triggers `.github/workflows/update-readme.yml`, which automatically fetches any new contest metadata, updates `contest_data/contests.json` and `README.md`, and commits the changes back to the repository.
 - **Automatic Local Updates on Commit (Optional Git Hook)**: Run `git config core.hooksPath .githooks` once to enable the local `pre-commit` hook. Whenever you commit changes in `AtCoder/` or `Codeforces/`, it will automatically run `update_readme.py` and stage the updated `README.md` and `contest_data/contests.json` in the same commit.
 - **Manual Updates**: Run `python3 update_readme.py` directly. It crawls the target folders, caches any new contests in `contest_data/contests.json`, and updates the blocks between the `<!-- START_... -->` and `<!-- END_... -->` markers in `README.md`.
-
-The target directories can have any number of subdirectories for organization, but the leaf directory containing solution files must follow a specific naming format:
-- **AtCoder**: The contest code as it appears in the URL (e.g., `ABC455`).
-- **Codeforces**: Prefixed with `CFC` followed by the contest ID (e.g., `CFC2220`).
 
 Static prose and new sections can be edited directly in `README.md` outside the `<!-- START_... -->` / `<!-- END_... -->` comment markers.

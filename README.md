@@ -1,13 +1,16 @@
 # Competitive Programming Solutions
 This is an archive of the problems that I've solved starting Apr 2026.
 
+<!-- START_STATS -->
 |Category|Number Solved|
 |:-:|:-:|
 |AtCoder|50|
 |Codeforces|12|
+<!-- END_STATS -->
 
 All Problems
 ---
+<!-- START_ALL_PROBLEMS -->
 <details>
 <summary>AtCoder</summary>
 
@@ -134,9 +137,11 @@ All Problems
 </details>
 </details>
 </details>
+<!-- END_ALL_PROBLEMS -->
 
 To Upsolve
 ---
+<!-- START_UPSOLVE -->
 <details>
 <summary>ABC448 - AtCoder Beginner Contest 448</summary>
 
@@ -165,13 +170,18 @@ To Upsolve
 - E - [Coloring a Red Black Tree](https://codeforces.com/contest/2220/problem/E)
 - F - [MEX Replacement on Tree](https://codeforces.com/contest/2220/problem/F)
 </details>
+<!-- END_UPSOLVE -->
 
 Usage Instructions
 ---
-This section is mainly for my future self, but this also serves as instructions       for anyone who wants to clone this repository to track their own solutions.
+This section is mainly for my future self, but also serves as instructions for anyone who wants to clone this repository to track their own solutions.
 
-To update the README, simply run `update_readme.py`. This will crawl the target folders       and update the the README accordingly.       The target directories can have any number of subdirectories for organization,       but the final directory (i.e., the directory that contains files)       must follow a specific format, depending on the website.
-- For AtCoder, this is the name of the contest as it appears in the URL.
-- For Codeforces, a prefix is added to differentiate it from other contests.       For Codeforces regular contests, a 'CFC' prefix is used.
+- **Automatic Updates on Push (GitHub Actions)**: Pushing solution changes to `main` triggers `.github/workflows/update-readme.yml`, which automatically fetches any new contest metadata, updates `contest_data/contests.json` and `README.md`, and commits the changes back to the repository.
+- **Automatic Local Updates on Commit (Optional Git Hook)**: Run `git config core.hooksPath .githooks` once to enable the local `pre-commit` hook. Whenever you commit changes in `AtCoder/` or `Codeforces/`, it will automatically run `update_readme.py` and stage the updated `README.md` and `contest_data/contests.json` in the same commit.
+- **Manual Updates**: Run `python3 update_readme.py` directly. It crawls the target folders, caches any new contests in `contest_data/contests.json`, and updates the blocks between the `<!-- START_... -->` and `<!-- END_... -->` markers in `README.md`.
 
-To add sections to the README, you must add lines to the `update_readme.py` file directly.      There is a `Markdown` class in `utils.py` with helper functions for       different markdown syntax.
+The target directories can have any number of subdirectories for organization, but the leaf directory containing solution files must follow a specific naming format:
+- **AtCoder**: The contest code as it appears in the URL (e.g., `ABC455`).
+- **Codeforces**: Prefixed with `CFC` followed by the contest ID (e.g., `CFC2220`).
+
+Static prose and new sections can be edited directly in `README.md` outside the `<!-- START_... -->` / `<!-- END_... -->` comment markers.

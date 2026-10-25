@@ -1,279 +1,247 @@
-""" Updates the README.md file to reflect the latest information. """
+"""Updates the auto-generated sections of README.md from contest solutions."""
 
 import os
-import re
-import subprocess
-import typing
+from typing import Callable
 
-import pandas as pd
+from update_links import update_cache
+from utils import (
+  ATCODER_DOMAIN,
+  ATCODER_PATH,
+  CODEFORCES_DOMAIN,
+  CODEFORCES_PATH,
+  Contest,
+  Markdown,
+  is_solution_file,
+  parse_solution_filename,
+)
 
-from utils import (ATCODER_DOMAIN, ATCODER_PATH, CODEFORCES_DOMAIN,
-                   CODEFORCES_PATH, CONTEST_DETAILS_CACHE, CONTESTS_CACHE,
-                   Markdown)
+README_PATH = "README.md"
 
-CONTESTS = None
-CONTEST_DETAILS = None
-CONTEST_TASKS = None
-
-
-def is_comment(text: str, lang: str) -> bool:
-  """Checks if the text is a comment in the specified language."""
-  if lang == "cpp":
-    pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//.*?)"
-    return re.match(pattern, text).group(2)
-
-  if lang == "py":
-    pattern = r"(\"\"\".*?\"\"\"|\'\'\'.*?\'\'\'|#.*?)"
-    return re.match(pattern, text).group(0)
-
-  return NotImplementedError(f"Language {lang} is not supported.")
-
-def split_extension(text: str) -> tuple[str, str]:
-  """Returns the base name and the extension of a file name."""
-  last_dot = text.rfind(".")
-  if last_dot == -1:
-    return (text, None)
-
-  return (text[:last_dot], text[last_dot+1:])
-
-def get_link_from_task_file(path: str) -> str:
-  """Retrieves the text on the first line of the file if its a comment."""
-  with open(path, "r", encoding="utf-8") as f:
-    # grab comment on first line
-    first_line = f.readline()
-
-  _, ext = split_extension(os.path.basename(path))
-  if not is_comment(first_line, ext):
-    return None
-
-  prefixes = ["\"\"\"", "\'\'\'", "/*", "//", "#"]
-  suffixes = ["\"\"\"", "\'\'\'", "*/"]
-  first_line = first_line.strip()
-  for prefix in prefixes:
-    first_line = first_line.removeprefix(prefix)
-  for suffix in suffixes:
-    first_line = first_line.removesuffix(suffix)
-  href = first_line.strip()
-
-  return href
-
-def get_task_code_from_filename(filename: str) -> str:
-  """Retrieves the task code from a filename."""
-  basename, _ = split_extension(filename)
-  _, task_code = basename.split("_", 1)
-  task_code = task_code.split("_", 1)[0]
-  return task_code
 
 def count_tasks(directory: str) -> int:
-  "Returns the number of unique tasks in the directory."
+  """Returns the number of unique solved tasks in the directory tree."""
+  if not os.path.isdir(directory):
+    return 0
+
   total = 0
   for _, _, filenames in os.walk(directory):
-    if len(filenames) == 0:
-      continue
-
-    tasks = set()
-    for name in filenames:
-      basename, _ = split_extension(name)
-      _, task_code = basename.split("_", 1)
-      task_code = task_code.split("_", 1)[0]
-
-      tasks.add(task_code)
-
+    tasks = {
+      parse_solution_filename(name)[1]
+      for name in filenames
+      if is_solution_file(name)
+    }
     total += len(tasks)
   return total
 
-# pylint: disable=C0116
-def get_missing_tasks(path: str) -> list[str]:
-  files = os.listdir(path)
 
-  all_tasks = CONTEST_DETAILS["task_name"].keys()
-
-  tasks_solved = set()
+def get_missing_tasks(
+  path: str,
+  contests: dict[str, Contest],
+) -> list[str]:
+  """Returns unsolved task codes for a contest folder in canonical order."""
   contest_code = os.path.basename(path)
-  for file in files:
-    task_code = get_task_code_from_filename(file)
-    tasks_solved.add(task_code)
+  if contest_code not in contests:
+    return []
 
-  all_tasks = set(CONTEST_TASKS[contest_code])
-  return list(all_tasks - tasks_solved)
+  tasks_solved = {
+    parse_solution_filename(file)[1]
+    for file in os.listdir(path)
+    if os.path.isfile(os.path.join(path, file)) and is_solution_file(file)
+  }
 
-def get_missing_tasks_fom_dir(directory: str) -> list[tuple[str, str]]:
-  all_missing_tasks = []
+  return [
+    task.task_code
+    for task in contests[contest_code].tasks
+    if task.task_code not in tasks_solved
+  ]
+
+
+def get_missing_tasks_from_dir(
+  directory: str,
+  contests: dict[str, Contest],
+) -> list[tuple[str, list[str]]]:
+  """Returns sorted (contest_code, missing_task_codes) pairs under directory."""
+  if not os.path.isdir(directory):
+    return []
+
+  missing_by_contest = []
   for dirpath, _, filenames in os.walk(directory):
-    if len(filenames) == 0:
+    if not any(is_solution_file(f) for f in filenames):
       continue
 
     contest_code = os.path.basename(dirpath)
-    missing_tasks = get_missing_tasks(dirpath)
-    all_missing_tasks.extend([(contest_code, task) for task in missing_tasks])
+    missing_tasks = get_missing_tasks(dirpath, contests)
+    if missing_tasks:
+      missing_by_contest.append((contest_code, missing_tasks))
 
-  return all_missing_tasks
+  missing_by_contest.sort(key=lambda item: item[0])
+  return missing_by_contest
 
-def dir_to_collapsed_section(directory: str, start_level: int,
-                             file_parser: typing.Callable[[str], str]):
-  """Generates a collapsed section based on the directory."""
-  def traverse(path: str, level: str) -> str:
-    files_and_dir = sorted(os.listdir(path))
+
+def dir_to_collapsed_section(
+  directory: str,
+  start_level: int,
+  file_parser: Callable[[str], str],
+) -> str:
+  """Recursively generates nested <details> sections for a directory tree."""
+  def traverse(path: str, level: int) -> str:
+    entries = sorted(os.listdir(path))
 
     lines = []
-    for fd in files_and_dir:
-      if os.path.isdir(os.path.join(path, fd)):
-        result = traverse(os.path.join(path, fd), level+1)
-        lines.extend(result.split("\n"))
-      else:
-        lines.append(f"- {file_parser(os.path.join(path, fd))}")
+    for entry in entries:
+      if entry.startswith("."):
+        continue
+      full_path = os.path.join(path, entry)
+      if os.path.isdir(full_path):
+        sub_section = traverse(full_path, level + 1)
+        if sub_section:
+          lines.extend(sub_section.split("\n"))
+      elif is_solution_file(entry):
+        lines.append(f"- {file_parser(full_path)}")
+
+    if not lines:
+      return ""
 
     if level < start_level:
       return "\n".join(lines)
 
-    section = Markdown.collapsed_section(
+    return Markdown.collapsed_section(
       summary=file_parser(path),
-      lines=lines
+      lines=lines,
     )
-    return section
 
   return traverse(directory, 0)
 
-def load_cache() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-  """Loads cached names and links from contest data."""
-  contests = pd.read_csv(CONTESTS_CACHE).set_index("contest_code").to_dict()
-  contest_details = pd.read_csv(CONTEST_DETAILS_CACHE)\
-      .set_index(["contest_code", "task_code"]).to_dict()
-  contest_tasks = pd.read_csv(CONTEST_DETAILS_CACHE)\
-      .groupby("contest_code")["task_code"].apply(list).to_dict()
-  return contests, contest_details, contest_tasks
 
-def atcoder_cf_parser(path: str, base_link: str) -> str:
+def format_entry(
+  path: str,
+  base_link: str,
+  contests: dict[str, Contest],
+) -> str:
+  """Formats a solution file or contest directory for Markdown output."""
   if os.path.isfile(path):
     filename = os.path.basename(path)
-    basename, _ = split_extension(filename)
-    contest_code, task_code = basename.split("_", 1)
-    task_code = task_code.split("_", 1)[0]
+    contest_code, task_code = parse_solution_filename(filename)
 
-    task_name = CONTEST_DETAILS["task_name"][(contest_code, task_code)]
-    task_link = f"{base_link}{CONTEST_DETAILS["task_link"][(contest_code, task_code)]}"
+    contest = contests[contest_code]
+    task_map = {t.task_code: t for t in contest.tasks}
+    task = task_map[task_code]
 
-    relative_link = f"/{path.replace(" ", "%20")}"
+    normalized_path = path.replace(os.sep, "/").replace(" ", "%20")
+    relative_link = f"/{normalized_path}"
     filename_md = Markdown.link(text=filename, href=relative_link)
-    taskname_md = Markdown.link(text=task_name, href=task_link)
+    taskname_md = Markdown.link(
+      text=task.task_name,
+      href=f"{base_link}{task.task_link}",
+    )
     return f"{filename_md} - {taskname_md}"
 
   dirname = os.path.basename(path)
-  if dirname in CONTESTS["contest_name"]:
-    dirname = f"{dirname} - {CONTESTS["contest_name"][dirname]}"
+  if dirname in contests:
+    return f"{dirname} - {contests[dirname].contest_name}"
   return dirname
 
 
-def all_problems_section(targets: list[tuple[str,str]]) -> str:
+def build_stats_table(target_folders: list[str]) -> str:
+  """Generates the solved problems summary table."""
+  return Markdown.table(
+    header=["Category", "Number Solved"],
+    alignment=["c", "c"],
+    data=[
+      target_folders,
+      [str(count_tasks(path)) for path in target_folders],
+    ],
+  )
+
+
+def build_all_problems_section(
+  targets: list[tuple[str, str]],
+  contests: dict[str, Contest],
+) -> str:
+  """Generates the collapsible tree of all solved problems."""
   collapsed_sections = []
   for path, base_link in targets:
-    current_section = dir_to_collapsed_section(
+    if not os.path.isdir(path):
+      continue
+    section = dir_to_collapsed_section(
       path,
       start_level=0,
-      file_parser=lambda x, base_link=base_link: atcoder_cf_parser(x, base_link=base_link)
+      file_parser=lambda x, bl=base_link: format_entry(x, bl, contests),
     )
-    collapsed_sections.append(current_section)
+    if section:
+      collapsed_sections.append(section)
 
-  return "\n".join([
-    "All Problems",
-    Markdown.hrule(),
-    *collapsed_sections
-  ])
+  return "\n".join(collapsed_sections)
 
-# pylint: disable=too-many-locals
-def missing_problems_section(targets: list[tuple[str,str]]) -> str:
-  contest_lines = []
+
+def build_missing_problems_section(
+  targets: list[tuple[str, str]],
+  contests: dict[str, Contest],
+) -> str:
+  """Generates the collapsible list of remaining tasks to upsolve."""
+  contest_sections = []
   for path, base_link in targets:
-    missing_problems = get_missing_tasks_fom_dir(path)
-    if len(missing_problems) == 0:
-      continue
+    missing_by_contest = get_missing_tasks_from_dir(path, contests)
+    for contest_code, task_codes in missing_by_contest:
+      contest = contests[contest_code]
+      task_map = {t.task_code: t for t in contest.tasks}
 
-    missing_problems.sort()
-    missing_problems_by_contest = {}
-    for key, value in missing_problems:
-      missing_problems_by_contest.setdefault(key, []).append(value)
-
-    for contest_code, tasks in missing_problems_by_contest.items():
       task_lines = []
-      for task_code in tasks:
-        task_name = CONTEST_DETAILS["task_name"][(contest_code, task_code)]
-        task_link = CONTEST_DETAILS["task_link"][(contest_code, task_code)]
-
-        task_md = Markdown.link(text=task_name, href=f"{base_link}{task_link}")
+      for task_code in task_codes:
+        task = task_map[task_code]
+        task_md = Markdown.link(
+          text=task.task_name,
+          href=f"{base_link}{task.task_link}",
+        )
         task_lines.append(f"- {task_code} - {task_md}")
 
-      collapsed_contest = Markdown.collapsed_section(
-        summary=f"{contest_code} - {CONTESTS["contest_name"][contest_code]}",
-        lines=task_lines
+      contest_sections.append(
+        Markdown.collapsed_section(
+          summary=f"{contest_code} - {contest.contest_name}",
+          lines=task_lines,
+        )
       )
-      contest_lines.append(collapsed_contest)
 
-  if len(contest_lines) == 0:
-    return 0
+  if not contest_sections:
+    return "_Nothing left to upsolve!_"
 
-  return "\n".join([
-    "To Upsolve",
-    Markdown.hrule(),
-    *contest_lines
-  ])
-
-def usage_instructions() -> str:
-  lines = [
-    "Usage Instructions",
-    Markdown.hrule(),
-    "This section is mainly for my future self, but this also serves as instructions \
-      for anyone who wants to clone this repository to track their own solutions.",
-    "",
-    "To update the README, simply run `update_readme.py`. This will crawl the target folders \
-      and update the the README accordingly. \
-      The target directories can have any number of subdirectories for organization, \
-      but the final directory (i.e., the directory that contains files) \
-      must follow a specific format, depending on the website.",
-    "- For AtCoder, this is the name of the contest as it appears in the URL.",
-    "- For Codeforces, a prefix is added to differentiate it from other contests. \
-      For Codeforces regular contests, a 'CFC' prefix is used.",
-    "",
-    "To add sections to the README, you must add lines to the `update_readme.py` file directly.\
-      There is a `Markdown` class in `utils.py` with helper functions for \
-      different markdown syntax."
-  ]
-
-  return "\n".join(lines)
+  return "\n".join(contest_sections)
 
 
-def main():
-  subprocess.run(["python3", "update_links.py"], check=True)
-
-  # pylint: disable=global-statement
-  global CONTESTS, CONTEST_DETAILS, CONTEST_TASKS
-  CONTESTS, CONTEST_DETAILS, CONTEST_TASKS = load_cache()
+def main() -> None:
+  """Updates contest cache and refreshes auto-generated sections in README.md."""
+  contests = update_cache()
 
   target_folders = [ATCODER_PATH, CODEFORCES_PATH]
   target_domains = [ATCODER_DOMAIN, CODEFORCES_DOMAIN]
   targets = list(zip(target_folders, target_domains))
 
-  stat_table = Markdown.table(
-    header=["Category", "Number Solved"],
-    alignment=["c", "c"],
-    data=[target_folders,[str(count_tasks(path)) for path in target_folders]]
+  with open(README_PATH, "r", encoding="utf-8") as f:
+    original_readme = f.read()
+
+  updated_readme = original_readme
+  updated_readme = Markdown.replace_section(
+    updated_readme,
+    "STATS",
+    build_stats_table(target_folders),
+  )
+  updated_readme = Markdown.replace_section(
+    updated_readme,
+    "ALL_PROBLEMS",
+    build_all_problems_section(targets, contests),
+  )
+  updated_readme = Markdown.replace_section(
+    updated_readme,
+    "UPSOLVE",
+    build_missing_problems_section(targets, contests),
   )
 
-  readme = Markdown("README.md")
-  readme.add_lines(
-    [
-      Markdown.header("Competitive Programming Solutions", level=1),
-      "This is an archive of the problems that I've solved starting Apr 2026.",
-      "",
-      stat_table,
-      "",
-      all_problems_section(targets=targets),
-      "",
-      missing_problems_section(targets=targets),
-      "",
-      usage_instructions()
-    ]
-  )
-  readme.write()
+  if updated_readme != original_readme:
+    with open(README_PATH, "w", encoding="utf-8") as f:
+      f.write(updated_readme)
+    print(f"Updated {README_PATH}.")
+  else:
+    print(f"{README_PATH} is already up to date.")
 
 
 if __name__ == "__main__":

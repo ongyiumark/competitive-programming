@@ -1,202 +1,196 @@
-""" Caches contest details """
+"""Fetches and caches contest metadata from AtCoder and Codeforces."""
 
-from typing import Optional
+import json
 import os
 
-import requests
-import cloudscraper
 from bs4 import BeautifulSoup
-import pandas as pd
-import tqdm
+import requests
 
-from utils import Task, Contest
-from utils import CONTESTS_CACHE, CONTEST_DETAILS_CACHE, ATCODER_PATH, CODEFORCES_PATH
+from utils import (
+  ATCODER_PATH,
+  CODEFORCES_PATH,
+  CONTESTS_CACHE,
+  Contest,
+  Task,
+  is_solution_file,
+)
+
+REQUEST_TIMEOUT = 10
+USER_AGENT = (
+  "Mozilla/5.0 (compatible; compprog-solutions-updater/2.0; "
+  "+https://github.com/ongyiumark/compprog-solutions)"
+)
 
 
-# pylint: disable=C0116
 def get_contest_codes_from_directory(directory: str) -> list[str]:
+  """Returns sorted contest directory names that contain solution files."""
+  if not os.path.isdir(directory):
+    return []
+
   contest_codes = []
   for dirpath, _, filenames in os.walk(directory):
-    if len(filenames) == 0:
+    solution_files = [f for f in filenames if is_solution_file(f)]
+    if not solution_files:
       continue
+    contest_codes.append(os.path.basename(dirpath))
 
-    base_dirname = os.path.basename(dirpath)
-    contest_codes.append(base_dirname)
-
-  return contest_codes
+  return sorted(set(contest_codes))
 
 
-def get_atcoder_contest_details(task_url: str) -> Contest:
-  response = requests.get(task_url, timeout=5)
+def get_atcoder_contest_details(contest_code: str) -> Contest:
+  """Scrapes contest title and task list from an AtCoder contest tasks page."""
+  task_url = f"https://atcoder.jp/contests/{contest_code}/tasks"
+  response = requests.get(
+    task_url,
+    headers={"User-Agent": USER_AGENT},
+    timeout=REQUEST_TIMEOUT,
+  )
   if response.status_code != 200:
     raise RuntimeError(
-      f"Failed to get {task_url}. Status code {response.status_code}.")
-  soup = BeautifulSoup(response.text, features="html.parser")
+      f"Failed to get {task_url}. Status code {response.status_code}."
+    )
 
+  soup = BeautifulSoup(response.text, features="html.parser")
   contest_title_tag = soup.find(class_="contest-title")
-  contest_name = contest_title_tag.text
-  contest_code = contest_title_tag.get("href").rsplit("/", 1)[-1].upper()
+  if contest_title_tag is None:
+    raise RuntimeError(f"Could not find contest title on {task_url}.")
 
-  contest = Contest(contest_code=contest_code, contest_name=contest_name)
-  table_rows = soup.find("div", class_="panel").find("tbody").find_all("tr")
-  for row in table_rows:
-    data = row.find_all("td")
-    task_code, task_name, *_ = [d.text for d in data]
-    task_link = data[0].contents[0].get("href")
-    task = Task(task_code=task_code, task_name=task_name, task_link=task_link)
-    contest.add_task(task)
+  contest_name = contest_title_tag.text.strip()
+  canonical_code = contest_title_tag.get("href", "").rsplit("/", 1)[-1].upper()
+  code = canonical_code or contest_code.upper()
+
+  contest = Contest(contest_code=code, contest_name=contest_name)
+  panel = soup.find("div", class_="panel")
+  tbody = panel.find("tbody") if panel else None
+  if tbody is None:
+    raise RuntimeError(f"Could not find tasks table on {task_url}.")
+
+  for row in tbody.find_all("tr"):
+    cells = row.find_all("td")
+    if len(cells) < 2:
+      continue
+    task_code = cells[0].text.strip()
+    task_name = cells[1].text.strip()
+    link_tag = cells[0].find("a")
+    task_link = link_tag.get("href") if link_tag else (
+      f"/contests/{code}/tasks/{code.lower()}_{task_code.lower()}"
+    )
+    contest.add_task(
+      Task(task_code=task_code, task_name=task_name, task_link=task_link)
+    )
 
   return contest
 
 
-def get_codeforces_contest_details(contest_url: str) -> Contest:
-  scraper = cloudscraper.create_scraper()
-  response = scraper.get(contest_url)
+def get_codeforces_contest_details(
+  contest_id: str,
+  prefix: str = "CFC",
+) -> Contest:
+  """Fetches contest details from the official Codeforces API."""
+  api_url = (
+    "https://codeforces.com/api/contest.standings"
+    f"?contestId={contest_id}&from=1&count=1"
+  )
+  response = requests.get(
+    api_url,
+    headers={"User-Agent": USER_AGENT},
+    timeout=REQUEST_TIMEOUT,
+  )
   if response.status_code != 200:
     raise RuntimeError(
-      f"Failed to get {contest_url}. Status code {response.status_code}.")
+      f"Failed to query Codeforces API for contest {contest_id} "
+      f"(HTTP {response.status_code})."
+    )
 
-  soup = BeautifulSoup(response.text, features="html.parser")
-  contest_title_tag = soup.find(id="sidebar").find("tbody").find("a")
-  contest_name = contest_title_tag.text
-  contest_code = contest_title_tag.get("href").rsplit("/", 1)[-1].upper()
+  payload = response.json()
+  if payload.get("status") != "OK":
+    comment = payload.get("comment", "Unknown API error")
+    raise RuntimeError(
+      f"Codeforces API error for contest {contest_id}: {comment}"
+    )
 
-  contest = Contest(contest_code=f"CFC{contest_code}",
-                    contest_name=contest_name)
-  table_rows = soup.find("table", class_="problems").find_all("tr")[1:]
-  for row in table_rows:
-    data = row.find_all("td")
-    task_code = data[0].text.strip()
-    task_link = data[0].find("a").get("href")
-    task_name = data[1].find("a").text.strip()
-    task = Task(task_code=task_code, task_name=task_name, task_link=task_link)
-    contest.add_task(task)
+  result = payload["result"]
+  contest_name = result["contest"]["name"].strip()
+  contest = Contest(
+    contest_code=f"{prefix}{contest_id}",
+    contest_name=contest_name,
+  )
+
+  for problem in result.get("problems", []):
+    task_code = str(problem["index"]).strip()
+    task_name = str(problem["name"]).strip()
+    task_link = f"/contest/{contest_id}/problem/{task_code}"
+    contest.add_task(
+      Task(task_code=task_code, task_name=task_name, task_link=task_link)
+    )
 
   return contest
 
 
-def cache_contests(contests: Contest,
-                   contests_df: Optional[pd.DataFrame] = None,
-                   contest_details_df: Optional[pd.DataFrame] = None):
-  if contests_df is None:
-    contests_df = pd.read_csv(CONTESTS_CACHE)
-  if contest_details_df is None:
-    contest_details_df = pd.read_csv(CONTEST_DETAILS_CACHE)
+def load_cache(cache_path: str = CONTESTS_CACHE) -> dict[str, Contest]:
+  """Loads cached contest metadata from JSON."""
+  if not os.path.exists(cache_path):
+    return {}
 
-  cached_contests = set(contests_df["contest_code"].values)
+  with open(cache_path, "r", encoding="utf-8") as f:
+    raw_data = json.load(f)
 
-  contest_codes = []
-  contest_names = []
-
-  task_contest_codes = []
-  task_codes = []
-  task_names = []
-  task_links = []
-  for contest in contests:
-    if contest.contest_code in cached_contests:
-      print(f"Using '{contest.contest_code}' cache.")
-      continue
-    contest_codes.append(contest.contest_code)
-    contest_names.append(contest.contest_name)
-
-    # drop contest details with this contest code
-    indices_to_drop = contest_details_df[contest_details_df["contest_code"] ==
-                                         contest.contest_code].index
-    contest_details_df.drop(indices_to_drop, inplace=True)
-
-    for task in contest.tasks:
-      task_contest_codes.append(contest.contest_code)
-      task_codes.append(task.task_code)
-      task_names.append(task.task_name)
-      task_links.append(task.task_link)
-
-  new_contest_df = pd.concat([
-    contests_df,
-    pd.DataFrame({
-      "contest_code": contest_codes,
-      "contest_name": contest_names
-    })
-  ])
-  new_details_df = pd.concat([
-    contest_details_df,
-    pd.DataFrame({
-      "contest_code": task_contest_codes,
-      "task_code": task_codes,
-      "task_name": task_names,
-      "task_link": task_links
-    })
-  ])
-  contests_df = new_contest_df
-  contest_details_df = new_details_df
-
-  contests_df.to_csv(CONTESTS_CACHE, index=False)
-  contest_details_df.to_csv(CONTEST_DETAILS_CACHE, index=False)
+  return {
+    code: Contest.from_dict(code, data)
+    for code, data in raw_data.items()
+  }
 
 
-def cache_atcoder_contests(contest_codes: list[str]):
-  task_urls = [
-    f"https://atcoder.jp/contests/{contest_code}/tasks"
-    for contest_code in contest_codes
-  ]
-  contest_df = pd.read_csv(CONTESTS_CACHE)
-  cached_contests = set(contest_df["contest_code"].values)
-
-  is_cached_list = [
-    contest_code in cached_contests for contest_code in contest_codes
-  ]
-
-  contests = []
-  for url, is_cached in tqdm.tqdm(list(zip(task_urls, is_cached_list)),
-                                  desc="Caching AtCoder"):
-    if is_cached:
-      print(f"Using cache for {url}.")
-      continue
-
-    try:
-      contest = get_atcoder_contest_details(url)
-      contests.append(contest)
-    except RuntimeError as e:
-      print(f"Failed to get {url}. Error: {e}")
-
-  cache_contests(contests, contests_df=contest_df)
+def save_cache(
+  contests: dict[str, Contest],
+  cache_path: str = CONTESTS_CACHE,
+) -> None:
+  """Writes cached contest metadata to JSON sorted by contest code."""
+  os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+  serialized = {
+    code: contests[code].to_dict()
+    for code in sorted(contests.keys())
+  }
+  with open(cache_path, "w", encoding="utf-8") as f:
+    json.dump(serialized, f, indent=2, ensure_ascii=False)
+    f.write("\n")
 
 
-def cache_codeforces_contests(contest_codes: list[str], prefix: str):
-  task_urls = [
-    f"https://codeforces.com/contest/{contest_code}"
-    for contest_code in contest_codes
-  ]
-  contest_df = pd.read_csv(CONTESTS_CACHE)
-  cached_contests = set(contest_df["contest_code"].values)
+def update_cache(cache_path: str = CONTESTS_CACHE) -> dict[str, Contest]:
+  """Fetches any uncached contests found in target directories and updates cache."""
+  contests = load_cache(cache_path)
+  updated = False
 
-  is_cached_list = [
-    f"{prefix}{contest_code}" in cached_contests
-    for contest_code in contest_codes
-  ]
-
-  contests = []
-  for url, is_cached in tqdm.tqdm(list(zip(task_urls, is_cached_list)),
-                                  desc="Caching Codeforeces"):
-    if is_cached:
-      print(f"Using cache for {url}.")
-      continue
-
-    try:
-      contest = get_codeforces_contest_details(url)
-      contests.append(contest)
-    except RuntimeError as e:
-      print(f"Failed to get {url}. Error: {e}")
-
-  cache_contests(contests, contests_df=contest_df)
-
-
-def main():
   atcoder_codes = get_contest_codes_from_directory(ATCODER_PATH)
-  cache_atcoder_contests(atcoder_codes)
+  missing_atcoder = [code for code in atcoder_codes if code not in contests]
+  for code in missing_atcoder:
+    print(f"Fetching AtCoder contest '{code}'...")
+    contest = get_atcoder_contest_details(code)
+    contests[contest.contest_code] = contest
+    updated = True
 
   codeforces_codes = get_contest_codes_from_directory(CODEFORCES_PATH)
-  cfc_codes = [code[3:] for code in codeforces_codes if code.startswith("CFC")]
-  cache_codeforces_contests(cfc_codes, prefix="CFC")
+  missing_cf = [
+    code for code in codeforces_codes
+    if code.startswith("CFC") and code not in contests
+  ]
+  for code in missing_cf:
+    contest_id = code[3:]
+    print(f"Fetching Codeforces contest '{code}' via API...")
+    contest = get_codeforces_contest_details(contest_id, prefix="CFC")
+    contests[contest.contest_code] = contest
+    updated = True
+
+  if updated:
+    save_cache(contests, cache_path)
+    print(f"Updated cache at {cache_path}.")
+
+  return contests
+
+
+def main() -> None:
+  """CLI entrypoint to refresh the contest cache."""
+  update_cache()
 
 
 if __name__ == "__main__":

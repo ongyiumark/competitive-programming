@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Only run if staged changes touch contest directories or updater scripts
+if git diff --cached --name-only | grep -qE '^(AtCoder|Codeforces)/'; then
+  echo "Detected contest changes; updating README.md..."
+  if [ -x "./venv/bin/python3" ]; then
+    ./venv/bin/python3 update_readme.py
+  else
+    python3 update_readme.py
+  fi
+  git add README.md contest_data/contests.json
+fi

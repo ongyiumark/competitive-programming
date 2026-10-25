@@ -2,5 +2,8 @@ ongoing/
 venv/
 basura*
 
+# macOS
+.DS_Store
+
 # Python Stuff
 __pycache__/

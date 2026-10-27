@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Only run if staged changes touch contest directories or updater scripts
-if git diff --cached --name-only | grep -qE '^(AtCoder/|Codeforces/|update_readme\.py|update_links\.py|utils\.py|contest_data/)'; then
+if git diff --cached --name-only | grep -E '^(AtCoder/|Codeforces/|update_readme\.py|update_links\.py|utils\.py|contest_data/)' > /dev/null; then
   echo "Detected contest or updater changes; updating README.md..."
   if [ -x "./venv/bin/python3" ]; then
     ./venv/bin/python3 update_readme.py

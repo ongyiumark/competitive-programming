@@ -1,5 +1,7 @@
 """Shared data structures and Markdown generation utilities."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 import os
 import re
@@ -21,6 +23,7 @@ def natural_sort_key(s: str) -> list[int | str]:
 
 def is_solution_file(filename: str) -> bool:
   """Returns True if the filename looks like a valid contest solution file."""
+  filename = os.path.basename(filename)
   if filename.startswith("."):
     return False
   base, ext = os.path.splitext(filename)

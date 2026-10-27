@@ -30,6 +30,9 @@ class TestUtils(unittest.TestCase):
     self.assertFalse(is_solution_file("test_.py"))
     self.assertFalse(is_solution_file("README.md"))
     self.assertFalse(is_solution_file("contests.json"))
+    # Directory path with underscore should not fool basename check
+    self.assertFalse(is_solution_file("dir_with_underscore/solution.cpp"))
+    self.assertTrue(is_solution_file("dir_with_underscore/ABC450_A.cpp"))
 
   def test_parse_solution_filename(self):
     self.assertEqual(parse_solution_filename("ABC450_A.py"), ("ABC450", "A"))

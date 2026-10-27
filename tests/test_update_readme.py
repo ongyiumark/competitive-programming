@@ -4,7 +4,12 @@ import os
 import tempfile
 import unittest
 
-from update_readme import count_tasks, format_entry, get_missing_tasks
+from update_readme import (
+  build_missing_problems_section,
+  count_tasks,
+  format_entry,
+  get_missing_tasks,
+)
 from utils import Contest, Task
 
 
@@ -62,6 +67,31 @@ class TestUpdateReadme(unittest.TestCase):
       entry_extra = format_entry(fpath_extra, "https://atcoder.jp", contests)
       expected_link = f"[{os.path.basename(fpath_extra)}](/{fpath_extra.replace(os.sep, '/')})"
       self.assertEqual(entry_extra, expected_link)
+
+      # Non-solution file without underscore does not crash
+      fpath_notes = os.path.join(tmpdir, "notes.txt")
+      with open(fpath_notes, "w") as f:
+        f.write("")
+      entry_notes = format_entry(fpath_notes, "https://atcoder.jp", contests)
+      self.assertIn("notes.txt", entry_notes)
+
+  def test_build_missing_problems_section_grouped(self):
+    contest = Contest(contest_code="ABC450", contest_name="ABC 450")
+    contest.add_task(Task("A", "Task A", "/a"))
+    contest.add_task(Task("B", "Task B", "/b"))
+    contests = {"ABC450": contest}
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      ac_dir = os.path.join(tmpdir, "AtCoder", "ABC450")
+      os.makedirs(ac_dir)
+      with open(os.path.join(ac_dir, "ABC450_A.cpp"), "w") as f:
+        f.write("")
+
+      targets = [(os.path.join(tmpdir, "AtCoder"), "https://atcoder.jp")]
+      md = build_missing_problems_section(targets, contests)
+      self.assertIn("AtCoder (1 to upsolve)", md)
+      self.assertIn("ABC450 - ABC 450 (1/2 solved · 1 remaining)", md)
+      self.assertIn("[Task B](https://atcoder.jp/b)", md)
 
 
 if __name__ == "__main__":

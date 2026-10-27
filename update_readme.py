@@ -127,6 +127,9 @@ def format_entry(
     relative_link = f"/{normalized_path}"
     filename_md = Markdown.link(text=filename, href=relative_link)
 
+    if not is_solution_file(filename):
+      return filename_md
+
     contest_code, task_code = parse_solution_filename(filename)
     contest = contests.get(contest_code)
     if contest:
@@ -211,7 +214,7 @@ def build_missing_problems_section(
       contest_sections.append(
         Markdown.collapsed_section(
           summary=(
-            f"{contest_code} - {contest.contest_name} "
+            f"{contest.contest_code} - {contest.contest_name} "
             f"({solved_count}/{total_tasks} solved · "
             f"{len(task_codes)} remaining)"
           ),
@@ -221,7 +224,9 @@ def build_missing_problems_section(
 
     if contest_sections:
       platform_name = os.path.basename(os.path.normpath(path))
-      total_remaining = sum(len(tc) for _, tc in missing_by_contest)
+      total_remaining = sum(
+        len(tc) for c_code, tc in missing_by_contest if c_code.upper() in contests
+      )
       platform_sections.append(
         Markdown.collapsed_section(
           summary=f"{platform_name} ({total_remaining} to upsolve)",

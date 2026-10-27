@@ -11,6 +11,9 @@ on:
       - "update_readme.py"
       - "update_links.py"
       - "utils.py"
+      - "tools/**"
+      - "requirements.txt"
+      - ".github/workflows/**"
       - "tests/**"
   pull_request:
     branches:
@@ -22,6 +25,9 @@ on:
       - "update_readme.py"
       - "update_links.py"
       - "utils.py"
+      - "tools/**"
+      - "requirements.txt"
+      - ".github/workflows/**"
       - "tests/**"
   workflow_dispatch:
 

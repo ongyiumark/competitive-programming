@@ -7,6 +7,7 @@ import re
 CPP_TEMPLATE = """\
 /* {url} */
 #include <cassert>
+#include <cstdint>
 #include <iostream>
 #include <vector>
 
@@ -16,12 +17,12 @@ typedef long double ld;
 typedef vector<int> vi;
 typedef vector<ll> vll;
 
-int main() {
+int main() {{
   ios_base::sync_with_stdio(false);
   cin.tie(NULL);
 
   return 0;
-}
+}}
 """
 
 PYTHON_TEMPLATE = """\
@@ -40,7 +41,10 @@ if __name__ == "__main__":
 
 
 def get_atcoder_path(contest_code: str) -> str:
-  code = contest_code.upper()
+  code = contest_code.strip().upper()
+  if not re.match(r"^[A-Z0-9_-]+$", code):
+    raise ValueError(f"Invalid AtCoder contest code: {contest_code!r}")
+
   match = re.match(r"^([A-Z]+)(\d+)$", code)
   if match:
     prefix, num_str = match.groups()
@@ -53,14 +57,19 @@ def get_atcoder_path(contest_code: str) -> str:
 
 
 def get_codeforces_path(contest_id: str, division: str) -> tuple[str, str, str]:
-  cid = str(contest_id).strip()
-  contest_code = cid if cid.startswith("CFC") else f"CFC{cid}"
+  cid = str(contest_id).strip().upper()
   clean_id = cid[3:] if cid.startswith("CFC") else cid
-  div_name = (
-    f"Division {division}"
-    if division and not division.lower().startswith("division")
-    else division
+  if not re.match(r"^[A-Z0-9_-]+$", clean_id):
+    raise ValueError(f"Invalid Codeforces contest ID: {contest_id!r}")
+  contest_code = f"CFC{clean_id}"
+
+  div_clean = re.sub(
+    r"^(?:div(?:ision)?\.?\s*)",
+    "",
+    str(division).strip(),
+    flags=re.IGNORECASE,
   )
+  div_name = f"Division {div_clean}" if div_clean else ""
   dest_dir = (
     os.path.join("Codeforces", "Contests", div_name, contest_code)
     if div_name
@@ -70,14 +79,18 @@ def get_codeforces_path(contest_id: str, division: str) -> tuple[str, str, str]:
 
 
 def scaffold_atcoder(args: argparse.Namespace) -> None:
-  code = args.contest.upper()
+  code = args.contest.strip().upper()
   tasks = args.tasks or ["A", "B", "C", "D", "E", "F", "G"]
   dest_dir = get_atcoder_path(code)
   os.makedirs(dest_dir, exist_ok=True)
   ext = ".py" if args.lang == "py" else ".cpp"
 
   for task in tasks:
-    filename = f"{code}_{task.upper()}{ext}"
+    task_clean = str(task).strip().upper()
+    if not re.match(r"^[A-Z0-9_-]+$", task_clean):
+      raise ValueError(f"Invalid task code: {task!r}")
+
+    filename = f"{code}_{task_clean}{ext}"
     filepath = os.path.join(dest_dir, filename)
     if os.path.exists(filepath):
       print(f"Skipping existing: {filepath}")
@@ -85,7 +98,7 @@ def scaffold_atcoder(args: argparse.Namespace) -> None:
 
     url = (
       f"https://atcoder.jp/contests/{code.lower()}/tasks/"
-      f"{code.lower()}_{task.lower()}"
+      f"{code.lower()}_{task_clean.lower()}"
     )
     content = (
       PYTHON_TEMPLATE.format(url=url)
@@ -105,13 +118,17 @@ def scaffold_codeforces(args: argparse.Namespace) -> None:
   ext = ".py" if args.lang == "py" else ".cpp"
 
   for task in tasks:
-    filename = f"{contest_code}_{task.upper()}{ext}"
+    task_clean = str(task).strip().upper()
+    if not re.match(r"^[A-Z0-9_-]+$", task_clean):
+      raise ValueError(f"Invalid task code: {task!r}")
+
+    filename = f"{contest_code}_{task_clean}{ext}"
     filepath = os.path.join(dest_dir, filename)
     if os.path.exists(filepath):
       print(f"Skipping existing: {filepath}")
       continue
 
-    url = f"https://codeforces.com/contest/{clean_id}/problem/{task.upper()}"
+    url = f"https://codeforces.com/contest/{clean_id}/problem/{task_clean}"
     content = (
       PYTHON_TEMPLATE.format(url=url)
       if args.lang == "py"

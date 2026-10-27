@@ -1,5 +1,7 @@
 """Shared data structures and Markdown generation utilities."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 import os
 import re
@@ -14,14 +16,21 @@ CODEFORCES_DOMAIN = "https://codeforces.com"
 SOLUTION_EXTENSIONS = {".cpp", ".cc", ".c", ".py", ".java", ".rs", ".go"}
 
 
+def natural_sort_key(s: str) -> list[int | str]:
+  """Sort key that orders alphanumeric strings naturally (e.g. 'ABC9' before 'ABC10')."""
+  return [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", s)]
+
+
 def is_solution_file(filename: str) -> bool:
   """Returns True if the filename looks like a valid contest solution file."""
+  filename = os.path.basename(filename)
   if filename.startswith("."):
     return False
   base, ext = os.path.splitext(filename)
   if ext.lower() not in SOLUTION_EXTENSIONS:
     return False
-  return "_" in base
+  parts = base.split("_", 1)
+  return len(parts) == 2 and bool(parts[0]) and bool(parts[1])
 
 
 def parse_solution_filename(filename: str) -> tuple[str, str]:
@@ -29,7 +38,7 @@ def parse_solution_filename(filename: str) -> tuple[str, str]:
   base, _ = os.path.splitext(os.path.basename(filename))
   contest_code, rest = base.split("_", 1)
   task_code = rest.split("_", 1)[0]
-  return contest_code, task_code
+  return contest_code.upper(), task_code.upper()
 
 
 @dataclass

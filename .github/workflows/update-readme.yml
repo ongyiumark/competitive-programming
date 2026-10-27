@@ -11,7 +11,29 @@ on:
       - "update_readme.py"
       - "update_links.py"
       - "utils.py"
+      - "tools/**"
+      - "requirements.txt"
+      - ".github/workflows/**"
+      - "tests/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "AtCoder/**"
+      - "Codeforces/**"
+      - "contest_data/**"
+      - "update_readme.py"
+      - "update_links.py"
+      - "utils.py"
+      - "tools/**"
+      - "requirements.txt"
+      - ".github/workflows/**"
+      - "tests/**"
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: write
@@ -33,10 +55,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Run unit tests
+        run: python -m unittest discover tests
+
       - name: Update contest cache and README
         run: python update_readme.py
 
+      - name: Check for uncommitted README updates (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          if ! git diff --quiet README.md contest_data/contests.json; then
+            echo "::notice::README.md or contests.json has pending updates. It will be committed automatically upon merge to main."
+          fi
+
       - name: Commit and push if changed
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

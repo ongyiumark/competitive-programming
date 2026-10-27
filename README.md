@@ -155,39 +155,48 @@ To Upsolve
 ---
 <!-- START_UPSOLVE -->
 <details>
-<summary>ABC448 - AtCoder Beginner Contest 448</summary>
+<summary>AtCoder (9 to upsolve)</summary>
+
+<details>
+<summary>ABC448 - AtCoder Beginner Contest 448 (6/7 solved · 1 remaining)</summary>
 
 - G - [Conquest](https://atcoder.jp/contests/ABC448/tasks/abc448_g)
 </details>
 <details>
-<summary>ABC453 - AtCoder Beginner Contest 453</summary>
+<summary>ABC453 - AtCoder Beginner Contest 453 (6/7 solved · 1 remaining)</summary>
 
 - F - [Avoid Division](https://atcoder.jp/contests/ABC453/tasks/abc453_f)
 </details>
 <details>
-<summary>ABC454 - Keysight Technologies Programming Contest（AtCoder Beginner Contest 454）</summary>
+<summary>ABC454 - Keysight Technologies Programming Contest（AtCoder Beginner Contest 454） (4/7 solved · 3 remaining)</summary>
 
 - E - [LRUD Moving](https://atcoder.jp/contests/ABC454/tasks/abc454_e)
 - F - [Make it Palindrome 2](https://atcoder.jp/contests/ABC454/tasks/abc454_f)
 - G - [Mode in the Subtree](https://atcoder.jp/contests/ABC454/tasks/abc454_g)
 </details>
 <details>
-<summary>ABC455 - Ｓｋｙ Inc, Programming Contest 2026 (AtCoder Beginner Contest 455)</summary>
+<summary>ABC455 - Ｓｋｙ Inc, Programming Contest 2026 (AtCoder Beginner Contest 455) (6/7 solved · 1 remaining)</summary>
 
 - G - [Balanced Subarrays](https://atcoder.jp/contests/ABC455/tasks/abc455_g)
 </details>
 <details>
-<summary>ABC478 - AtCoder Beginner Contest 478</summary>
+<summary>ABC478 - AtCoder Beginner Contest 478 (4/7 solved · 3 remaining)</summary>
 
 - E - [lt and le](https://atcoder.jp/contests/ABC478/tasks/abc478_e)
 - F - [Min-First Search](https://atcoder.jp/contests/ABC478/tasks/abc478_f)
 - G - [Division Point Hull](https://atcoder.jp/contests/ABC478/tasks/abc478_g)
 </details>
+</details>
+
 <details>
-<summary>CFC2220 - Codeforces Round 1093 (Div. 2)</summary>
+<summary>Codeforces (2 to upsolve)</summary>
+
+<details>
+<summary>CFC2220 - Codeforces Round 1093 (Div. 2) (5/7 solved · 2 remaining)</summary>
 
 - E - [Coloring a Red Black Tree](https://codeforces.com/contest/2220/problem/E)
 - F - [MEX Replacement on Tree](https://codeforces.com/contest/2220/problem/F)
+</details>
 </details>
 <!-- END_UPSOLVE -->
 

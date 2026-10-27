@@ -7,3 +7,19 @@ basura*
 
 # Python Stuff
 __pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# C/C++ build artifacts
+*.o
+*.out
+a.out
+*.exe
+*.dSYM/
+
+# IDEs & Language Servers
+.vscode/
+.idea/
+.clangd/
+compile_commands.json

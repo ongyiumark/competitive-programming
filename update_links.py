@@ -13,6 +13,7 @@ from utils import (
   Contest,
   Task,
   is_solution_file,
+  natural_sort_key,
 )
 
 REQUEST_TIMEOUT = 10
@@ -34,7 +35,7 @@ def get_contest_codes_from_directory(directory: str) -> list[str]:
       continue
     contest_codes.append(os.path.basename(dirpath))
 
-  return sorted(set(contest_codes))
+  return sorted(set(contest_codes), key=natural_sort_key)
 
 
 def get_atcoder_contest_details(contest_code: str) -> Contest:
@@ -88,7 +89,7 @@ def get_codeforces_contest_details(
 ) -> Contest:
   """Fetches contest details from the official Codeforces API."""
   api_url = (
-    f"https://codeforces.com/api/contest.standings?contestId={contest_id}"
+    f"https://codeforces.com/api/contest.standings?contestId={contest_id}&from=1&count=1"
   )
   response = requests.get(
     api_url,
@@ -154,7 +155,7 @@ def save_cache(
   os.makedirs(os.path.dirname(cache_path), exist_ok=True)
   serialized = {
     code: contests[code].to_dict()
-    for code in sorted(contests.keys())
+    for code in sorted(contests.keys(), key=natural_sort_key)
   }
   with open(cache_path, "w", encoding="utf-8") as f:
     json.dump(serialized, f, indent=2, ensure_ascii=False)

@@ -12,6 +12,7 @@ from utils import (
   Contest,
   Markdown,
   is_solution_file,
+  natural_sort_key,
   parse_solution_filename,
 )
 
@@ -39,20 +40,21 @@ def get_missing_tasks(
   contests: dict[str, Contest],
 ) -> list[str]:
   """Returns unsolved task codes for a contest folder in canonical order."""
-  contest_code = os.path.basename(path)
-  if contest_code not in contests:
+  contest_code = os.path.basename(os.path.normpath(path)).upper()
+  contest = contests.get(contest_code)
+  if not contest:
     return []
 
   tasks_solved = {
-    parse_solution_filename(file)[1]
+    parse_solution_filename(file)[1].upper()
     for file in os.listdir(path)
     if os.path.isfile(os.path.join(path, file)) and is_solution_file(file)
   }
 
   return [
     task.task_code
-    for task in contests[contest_code].tasks
-    if task.task_code not in tasks_solved
+    for task in contest.tasks
+    if task.task_code.upper() not in tasks_solved
   ]
 
 
@@ -74,7 +76,7 @@ def get_missing_tasks_from_dir(
     if missing_tasks:
       missing_by_contest.append((contest_code, missing_tasks))
 
-  missing_by_contest.sort(key=lambda item: item[0])
+  missing_by_contest.sort(key=lambda item: natural_sort_key(item[0]))
   return missing_by_contest
 
 
@@ -85,7 +87,7 @@ def dir_to_collapsed_section(
 ) -> str:
   """Recursively generates nested <details> sections for a directory tree."""
   def traverse(path: str, level: int) -> str:
-    entries = sorted(os.listdir(path))
+    entries = sorted(os.listdir(path), key=natural_sort_key)
 
     lines = []
     for entry in entries:
@@ -121,24 +123,28 @@ def format_entry(
   """Formats a solution file or contest directory for Markdown output."""
   if os.path.isfile(path):
     filename = os.path.basename(path)
-    contest_code, task_code = parse_solution_filename(filename)
-
-    contest = contests[contest_code]
-    task_map = {t.task_code: t for t in contest.tasks}
-    task = task_map[task_code]
-
     normalized_path = path.replace(os.sep, "/").replace(" ", "%20")
     relative_link = f"/{normalized_path}"
     filename_md = Markdown.link(text=filename, href=relative_link)
-    taskname_md = Markdown.link(
-      text=task.task_name,
-      href=f"{base_link}{task.task_link}",
-    )
-    return f"{filename_md} - {taskname_md}"
 
-  dirname = os.path.basename(path)
-  if dirname in contests:
-    return f"{dirname} - {contests[dirname].contest_name}"
+    contest_code, task_code = parse_solution_filename(filename)
+    contest = contests.get(contest_code)
+    if contest:
+      task_map = {t.task_code.upper(): t for t in contest.tasks}
+      task = task_map.get(task_code.upper())
+      if task:
+        taskname_md = Markdown.link(
+          text=task.task_name,
+          href=f"{base_link}{task.task_link}",
+        )
+        return f"{filename_md} - {taskname_md}"
+
+    return filename_md
+
+  dirname = os.path.basename(os.path.normpath(path))
+  canonical_key = dirname.upper()
+  if canonical_key in contests:
+    return f"{dirname} - {contests[canonical_key].contest_name}"
   return dirname
 
 
@@ -178,17 +184,24 @@ def build_missing_problems_section(
   targets: list[tuple[str, str]],
   contests: dict[str, Contest],
 ) -> str:
-  """Generates the collapsible list of remaining tasks to upsolve."""
-  contest_sections = []
+  """Generates the collapsible list of remaining tasks grouped by platform."""
+  platform_sections = []
   for path, base_link in targets:
+    contest_sections = []
     missing_by_contest = get_missing_tasks_from_dir(path, contests)
     for contest_code, task_codes in missing_by_contest:
-      contest = contests[contest_code]
-      task_map = {t.task_code: t for t in contest.tasks}
+      contest = contests.get(contest_code.upper())
+      if not contest:
+        continue
+      task_map = {t.task_code.upper(): t for t in contest.tasks}
+      total_tasks = len(contest.tasks)
+      solved_count = total_tasks - len(task_codes)
 
       task_lines = []
       for task_code in task_codes:
-        task = task_map[task_code]
+        task = task_map.get(task_code.upper())
+        if not task:
+          continue
         task_md = Markdown.link(
           text=task.task_name,
           href=f"{base_link}{task.task_link}",
@@ -197,15 +210,29 @@ def build_missing_problems_section(
 
       contest_sections.append(
         Markdown.collapsed_section(
-          summary=f"{contest_code} - {contest.contest_name}",
+          summary=(
+            f"{contest_code} - {contest.contest_name} "
+            f"({solved_count}/{total_tasks} solved · "
+            f"{len(task_codes)} remaining)"
+          ),
           lines=task_lines,
         )
       )
 
-  if not contest_sections:
+    if contest_sections:
+      platform_name = os.path.basename(os.path.normpath(path))
+      total_remaining = sum(len(tc) for _, tc in missing_by_contest)
+      platform_sections.append(
+        Markdown.collapsed_section(
+          summary=f"{platform_name} ({total_remaining} to upsolve)",
+          lines=contest_sections,
+        )
+      )
+
+  if not platform_sections:
     return "_Nothing left to upsolve!_"
 
-  return "\n".join(contest_sections)
+  return "\n\n".join(platform_sections)
 
 
 def main() -> None:
